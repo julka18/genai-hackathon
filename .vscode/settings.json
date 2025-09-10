@@ -1,0 +1,17 @@
+{
+    // 🔑 What This Does:
+    // defaultInterpreterPath → ensures VS Code uses the .venv inside the repo.
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    // activateEnvironment → makes sure your terminal inside VS Code auto-activates the environment.
+    "python.terminal.activateEnvironment": true,
+    // extraPaths → allows imports from a future src/ folder without errors (cleaner imports).
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src"
+    ],
+    // formatOnSave → auto-formats Python code when saving (can plug in Black later).
+    "editor.formatOnSave": true,
+    // organizeImports → cleans unused imports automatically.
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    }
+}
