@@ -1,4 +1,4 @@
-## 🚀 Current Progress (Phase 0)
+## 🚀 Current Progress (Phase 0) (run `python3 -m http.server 5173` & open `http://localhost:5173/web/auth/index.html`)
 
 - Implemented the **first landing/login page** for प्रchar.
 - Design uses a premium **liquid glass UI** with full background image.
@@ -92,3 +92,4 @@ Below is the breakdown of the current structure and the role of each file/folder
 - Repo initialized with base config files.  
 - VS Code and Python environment standardized across the team.  
 - Ready for **Phase 1: Feature development + structured codebase**.  
+
