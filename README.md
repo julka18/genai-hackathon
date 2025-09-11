@@ -1,3 +1,18 @@
+## 🚀 Current Progress (Phase 0)
+
+- Implemented the **first landing/login page** for प्रchar.
+- Design uses a premium **liquid glass UI** with full background image.
+- Integrated **Firebase Authentication (Phone Number + OTP)**.
+- User profile (first name, last name, phone) is saved to **Firestore database**.
+- This page is the entry point for artisans to create their profile.
+
+👉 At this stage, only the **landing page with authentication** is built and working.
+Further modules (media upload, AI pipeline for ads/branding, marketplace publishing) will be added in the next phases.
+
+
+
+
+
 # 🛠️ GenAI Hackathon – Repo Setup (Phase 0)
 
 This repository has been initialized for our hackathon project.  

@@ -1,0 +1,284 @@
+:root {
+    --bg: #0b0b10;
+    --text: #eef1f6;
+    --muted: #9aa0aa;
+    --radius: 22px;
+    --shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    --ring: rgba(124, 92, 255, .35);
+    --btn1: #6f5bff;
+    --btn2: #3f34ff;
+    --btn1h: #8777ff;
+    --btn2h: #5146ff;
+    --ok1: #2bd4a7;
+    --ok2: #19a680;
+}
+
+/* ===== Base ===== */
+* {
+    box-sizing: border-box
+}
+
+html,
+body {
+    height: 100%
+}
+
+body {
+    margin: 0;
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* ===== Background layers ===== */
+.bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1
+}
+
+.bg-blur {
+    position: absolute;
+    inset: 0;
+    background: url("./prachar2.jpg") center/cover no-repeat;
+    filter: blur(36px) brightness(.85) saturate(110%);
+    transform: scale(1.25);
+}
+
+.bg-image {
+    position: absolute;
+    inset: 0;
+    background: url("./prachar2.jpg") center center / contain no-repeat;
+    background-color: var(--bg);
+    /* fills empty bars behind full image */
+}
+
+/* ===== Layout ===== */
+.container {
+    width: min(96vw, 720px);
+    display: grid;
+    gap: 28px;
+    padding: 32px 20px;
+    margin-inline: auto;
+}
+
+/* ===== Brand ===== */
+.brand {
+    text-align: center
+}
+
+.logo-dot {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #7c5cff;
+    color: #fff;
+    font-weight: 800;
+    margin: 0 auto 10px;
+    box-shadow: 0 10px 26px var(--ring);
+}
+
+.title {
+    margin: 0;
+    font-size: 42px;
+    font-weight: 900
+}
+
+.title .dev {
+    font-family: "Noto Sans Devanagari", Inter, sans-serif
+}
+
+.tag {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 15px
+}
+
+/* ===== Liquid Glass Card ===== */
+.card {
+    position: relative;
+    isolation: isolate;
+    padding: 34px 28px;
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(18, 19, 24, .42), rgba(18, 19, 24, .58));
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, .22);
+    box-shadow: var(--shadow);
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    z-index: -1;
+    background:
+        radial-gradient(120% 60% at 10% 0%, rgba(255, 255, 255, .20) 0%, transparent 55%),
+        radial-gradient(80% 60% at 100% 0%, rgba(255, 255, 255, .10) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, 0) 35% 65%, rgba(255, 255, 255, .06));
+    pointer-events: none;
+}
+
+.card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 40%),
+        linear-gradient(to right, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .10) 70%, rgba(255, 255, 255, 0));
+    mix-blend-mode: screen;
+    opacity: .6;
+}
+
+.card-title {
+    margin: 0 0 6px;
+    font-weight: 800;
+    font-size: 22px
+}
+
+.card-sub {
+    margin: 0 0 20px;
+    color: var(--muted);
+    font-size: 14px
+}
+
+/* ===== Form ===== */
+.form {
+    display: grid;
+    gap: 18px
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px
+}
+
+@media (max-width:560px) {
+    .grid-2 {
+        grid-template-columns: 1fr
+    }
+}
+
+.field {
+    display: grid;
+    gap: 8px
+}
+
+.field span {
+    font-size: 13px;
+    color: var(--muted)
+}
+
+.field input {
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, .22);
+    background: rgba(255, 255, 255, .08);
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border .18s, box-shadow .18s, background .18s, transform .06s;
+}
+
+.field input:focus {
+    border-color: rgba(255, 255, 255, .35);
+    box-shadow: 0 0 0 5px var(--ring);
+    background: rgba(255, 255, 255, .12);
+}
+
+/* ===== Buttons ===== */
+.btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    border-radius: 14px;
+    padding: 0 16px;
+    font-weight: 700;
+    font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    cursor: pointer;
+    user-select: none;
+    transition: transform .08s ease, filter .18s ease;
+    overflow: hidden;
+    color: #fff;
+}
+
+.btn:active {
+    transform: translateY(1px)
+}
+
+.primary {
+    background: linear-gradient(135deg, var(--btn1), var(--btn2))
+}
+
+.primary:hover {
+    background: linear-gradient(135deg, var(--btn1h), var(--btn2h));
+    filter: saturate(110%)
+}
+
+.success {
+    background: linear-gradient(135deg, var(--ok1), var(--ok2));
+    color: #062018
+}
+
+.btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 38%),
+        radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, .28), transparent 60%);
+    mix-blend-mode: screen;
+    opacity: .8;
+}
+
+/* ===== Helpers ===== */
+.otp {
+    display: grid;
+    gap: 14px
+}
+
+.hidden {
+    display: none
+}
+
+.recaptcha {
+    height: 1px;
+    overflow: hidden
+}
+
+#notice {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted)
+}
+
+.footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 14px
+}
+
+@media (hover:hover) {
+    .card {
+        transition: transform .25s ease, box-shadow .25s ease
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 26px 70px rgba(0, 0, 0, .55)
+    }
+}
