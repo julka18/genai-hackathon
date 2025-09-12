@@ -1,4 +1,4 @@
-## 🚀 Current Progress (Phase 0) (run `python3 -m http.server 5173` & open `http://localhost:5173/web/auth/index.html`)
+## 🚀 Current Progress (Phase 0) 
 
 - Implemented the **first landing/login page** for प्रchar.
 - Design uses a premium **liquid glass UI** with full background image.
