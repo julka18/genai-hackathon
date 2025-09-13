@@ -181,3 +181,7 @@ cython_debug/
 .cursorindexingignore
 .DS_Store
 .env*logs/
+.env/
+.env.local
+logs/
+.env.local

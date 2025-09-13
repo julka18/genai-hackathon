@@ -1,0 +1,30 @@
+{
+    "id": "kalamkari-scarf",
+    "titles": {
+        "en": "Handmade Kalamkari Scarf",
+        "hi": "हैंडमेड कलमकारी स्कार्फ"
+    },
+    "description": {
+        "hi": "प्राकृतिक रंग, हैंड-ब्लॉक प्रिंट"
+    },
+    "price": {
+        "low": 799,
+        "high": 1199,
+        "currency": "INR"
+    },
+    "hashtags": [
+        "#kalamkari",
+        "#handmade",
+        "#artisan",
+        "#india"
+    ],
+    "cta": {
+        "whatsapp": "https://wa.me/91XXXXXXXXXX?text=Kalamkari%20Scarf"
+    },
+    "lang": "hi",
+    "assets": [
+        "assets/img1.jpg",
+        "assets/img2.jpg"
+    ],
+    "head_index": 0
+}
