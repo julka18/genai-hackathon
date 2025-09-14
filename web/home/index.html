@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="hi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>प्रchar — Dashboard</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="../auth/style.css" />
+</head>
+
+<body>
+    <!-- Background with video -->
+    <div class="bg">
+        <div class="bg-video-container">
+            <video class="bg-video" autoplay muted loop playsinline>
+                <source src="../auth/prachar-bg.mp4" type="video/mp4">
+                <source src="../auth/prachar-bg.webm" type="video/webm">
+                <div class="bg-fallback"></div>
+            </video>
+        </div>
+    </div>
+
+    <!-- Main container with liquid glass card -->
+    <div class="main-wrapper">
+        <div class="main-card">
+            <!-- Navigation -->
+            <nav class="nav-bar">
+                <div class="nav-left">
+                    <div class="logo">
+                        <div class="logo-icon">✓</div>
+                        <span class="logo-text"><span class="dev">प्र</span>char</span>
+                    </div>
+                </div>
+                <div class="nav-center">
+                    <a href="#" class="nav-link active">Home</a>
+                    <a href="../upload/index.html" class="nav-link">Upload</a>
+                    <a href="../products/index.html" class="nav-link">My Products</a>
+                    <a href="../profile/index.html" class="nav-link">Profile</a>
+                </div>
+                <div class="nav-right">
+                    <span class="welcome-text">Welcome back!</span>
+                    <button class="logout-btn" id="logout-btn">Logout</button>
+                </div>
+            </nav>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Page Title -->
+                <div class="page-title-section">
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Welcome to your प्रchar seller dashboard</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-products">0</h3>
+                            <p class="stat-label">Total Products</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-revenue">₹0</h3>
+                            <p class="stat-label">Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👁️</div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="total-views">0</h3>
+                            <p class="stat-label">Total Views</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="avg-rating">0.0</h3>
+                            <p class="stat-label">Average Rating</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h2 class="section-title">Quick Actions</h2>
+                    <div class="action-buttons">
+                        <a href="../upload/index.html" class="action-btn primary">
+                            <div class="action-icon">➕</div>
+                            <div class="action-text">
+                                <h3>Upload New Product</h3>
+                                <p>Add a new product to your store</p>
+                            </div>
+                        </a>
+                        <a href="../products/index.html" class="action-btn secondary">
+                            <div class="action-icon">📋</div>
+                            <div class="action-text">
+                                <h3>Manage Products</h3>
+                                <p>Edit or delete existing products</p>
+                            </div>
+                        </a>
+                        <a href="../profile/index.html" class="action-btn secondary">
+                            <div class="action-icon">👤</div>
+                            <div class="action-text">
+                                <h3>Update Profile</h3>
+                                <p>Manage your account settings</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Products -->
+                <div class="recent-products">
+                    <h2 class="section-title">Recent Products</h2>
+                    <div class="products-grid" id="recent-products-grid">
+                        <!-- Products will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Analytics Overview -->
+                <div class="analytics-overview">
+                    <h2 class="section-title">Analytics Overview</h2>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Sales This Month</h3>
+                            <div class="analytics-chart">
+                                <div class="chart-bar" id="sales-chart-bar" style="height: 0%"></div>
+                            </div>
+                            <p class="analytics-value" id="sales-this-month">₹0</p>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Top Category</h3>
+                            <div class="category-stats">
+                                <div class="category-item">
+                                    <span>Textiles & Fabrics</span>
+                                    <span>45%</span>
+                                </div>
+                                <div class="category-item">
+                                    <span>Jewelry</span>
+                                    <span>30%</span>
+                                </div>
+                                <div class="category-item">
+                                    <span>Pottery</span>
+                                    <span>25%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Recent Activity</h3>
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <span class="activity-icon">📦</span>
+                                    <span>New product uploaded</span>
+                                    <span class="activity-time">2 hours ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <span class="activity-icon">💰</span>
+                                    <span>Sale completed</span>
+                                    <span class="activity-time">1 day ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <span class="activity-icon">⭐</span>
+                                    <span>New review received</span>
+                                    <span class="activity-time">3 days ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+
+</html>

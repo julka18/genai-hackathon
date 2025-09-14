@@ -19,6 +19,32 @@ const auth = getAuth(app);
 auth.useDeviceLanguage();
 const db = getFirestore(app);
 
+// Handle background video loading
+document.addEventListener('DOMContentLoaded', () => {
+    const video = document.querySelector('.bg-video');
+    const fallback = document.querySelector('.bg-fallback');
+    
+    if (video) {
+        // Check if video can play
+        video.addEventListener('error', () => {
+            console.log('Video failed to load, using fallback image');
+            if (fallback) {
+                fallback.style.display = 'block';
+            }
+        });
+        
+        // Handle video loading
+        video.addEventListener('loadeddata', () => {
+            console.log('Background video loaded successfully');
+        });
+        
+        // Pause video on mobile to save battery (optional)
+        if (window.innerWidth <= 768) {
+            video.pause();
+        }
+    }
+});
+
 // Invisible reCAPTCHA required for Phone Auth
 window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
 
@@ -31,12 +57,20 @@ const setNotice = (msg, ok = false) => {
 };
 
 $("send-otp").onclick = async () => {
-    const phone = $("phone").value.trim();
+    const phoneInput = $("phone").value.trim();
     const first = $("firstName").value.trim();
     const last = $("lastName").value.trim();
 
     if (!first || !last) return setNotice("Please enter first & last name.");
-    if (!phone.startsWith("+")) return setNotice("Use E.164 format, e.g., +91XXXXXXXXXX");
+    if (!phoneInput) return setNotice("Please enter your phone number.");
+    if (phoneInput.length !== 10) return setNotice("Please enter a valid 10-digit phone number.");
+
+    // Add +91 prefix to the phone number
+    const phone = "+91" + phoneInput;
+
+    const btn = $("send-otp");
+    btn.classList.add("loading");
+    btn.disabled = true;
 
     try {
         setNotice("Sending OTP…");
@@ -46,6 +80,9 @@ $("send-otp").onclick = async () => {
     } catch (e) {
         console.error(e);
         setNotice("Could not send OTP: " + (e?.message || e));
+    } finally {
+        btn.classList.remove("loading");
+        btn.disabled = false;
     }
 };
 
@@ -54,6 +91,10 @@ $("verify-otp").onclick = async () => {
     const code = $("otp").value.trim();
     if (code.length < 6) return setNotice("Please enter the 6-digit OTP.");
 
+    const btn = $("verify-otp");
+    btn.classList.add("loading");
+    btn.disabled = true;
+
     try {
         setNotice("Verifying…");
         const { user } = await confirmationResult.confirm(code);
@@ -61,14 +102,17 @@ $("verify-otp").onclick = async () => {
         await setDoc(doc(db, "users", user.uid), {
             firstName: $("firstName").value.trim(),
             lastName: $("lastName").value.trim(),
-            phone: $("phone").value.trim(),
+            phone: "+91" + $("phone").value.trim(),
             createdAt: serverTimestamp()
         }, { merge: true });
 
         setNotice("✅ Verified. Profile saved. Redirecting…", true);
-        setTimeout(() => (window.location.href = "/web/upload/index.html"), 700);
+        setTimeout(() => (window.location.href = "/web/home/index.html"), 700);
     } catch (e) {
         console.error(e);
         setNotice("Wrong OTP or expired. Try again.");
+    } finally {
+        btn.classList.remove("loading");
+        btn.disabled = false;
     }
 };

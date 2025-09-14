@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="hi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>प्रchar — My Products</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="../auth/style.css" />
+</head>
+
+<body>
+    <!-- Background with video -->
+    <div class="bg">
+        <div class="bg-video-container">
+            <video class="bg-video" autoplay muted loop playsinline>
+                <source src="../auth/prachar-bg.mp4" type="video/mp4">
+                <source src="../auth/prachar-bg.webm" type="video/webm">
+                <div class="bg-fallback"></div>
+            </video>
+        </div>
+    </div>
+
+    <!-- Main container with liquid glass card -->
+    <div class="main-wrapper">
+        <div class="main-card">
+            <!-- Navigation -->
+            <nav class="nav-bar">
+                <div class="nav-left">
+                    <div class="logo">
+                        <div class="logo-icon">✓</div>
+                        <span class="logo-text"><span class="dev">प्र</span>char</span>
+                    </div>
+                </div>
+                <div class="nav-center">
+                    <a href="../home/index.html" class="nav-link">Home</a>
+                    <a href="../upload/index.html" class="nav-link">Upload</a>
+                    <a href="#" class="nav-link active">My Products</a>
+                    <a href="../profile/index.html" class="nav-link">Profile</a>
+                </div>
+                <div class="nav-right">
+                    <span class="welcome-text">Welcome back!</span>
+                    <button class="logout-btn" id="logout-btn">Logout</button>
+                </div>
+            </nav>
+
+            <!-- Products Content -->
+            <div class="products-content">
+                <!-- Page Title -->
+                <div class="page-title-section">
+                    <h1 class="page-title">My Products</h1>
+                    <p class="page-subtitle">Manage your uploaded products</p>
+                </div>
+
+                <!-- Products Header -->
+                <div class="products-header">
+                    <div class="products-stats">
+                        <span class="stat-item">
+                            <strong id="total-products-count">0</strong> Total Products
+                        </span>
+                        <span class="stat-item">
+                            <strong id="active-products-count">0</strong> Active
+                        </span>
+                        <span class="stat-item">
+                            <strong id="draft-products-count">0</strong> Drafts
+                        </span>
+                    </div>
+                    <a href="../upload/index.html" class="btn primary">
+                        <span class="btn-icon">➕</span>
+                        Add New Product
+                    </a>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="products-grid" id="products-grid">
+                    <!-- Products will be loaded here -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="empty-state" style="display: none;">
+                    <div class="empty-icon">📦</div>
+                    <h3>No Products Yet</h3>
+                    <p>You haven't uploaded any products yet. Start by adding your first product!</p>
+                    <a href="../upload/index.html" class="btn primary">Upload Your First Product</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Product</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <form id="edit-form" class="edit-form">
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">1</span>
+                        <span class="section-label">Product Information</span>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <label class="field">
+                                <span>Product Name</span>
+                                <input id="edit-productName" required />
+                            </label>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="field">
+                                <span>Category</span>
+                                <select id="edit-category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="textiles">Textiles & Fabrics</option>
+                                    <option value="jewelry">Jewelry & Accessories</option>
+                                    <option value="pottery">Pottery & Ceramics</option>
+                                    <option value="woodwork">Woodwork & Carving</option>
+                                    <option value="metalwork">Metalwork & Brass</option>
+                                    <option value="paintings">Paintings & Art</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="field">
+                                <span>Description</span>
+                                <textarea id="edit-description" rows="3" required></textarea>
+                            </label>
+                        </div>
+
+                        <div class="form-row form-row-2">
+                            <label class="field">
+                                <span>Price (₹)</span>
+                                <input id="edit-price" type="number" min="1" required />
+                            </label>
+                            <label class="field">
+                                <span>Quantity</span>
+                                <input id="edit-quantity" type="number" min="1" required />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-header">
+                        <span class="section-number">2</span>
+                        <span class="section-label">Product Images</span>
+                    </div>
+                    
+                    <div class="current-images" id="current-images">
+                        <!-- Current images will be shown here -->
+                    </div>
+                    
+                    <div class="upload-area" id="edit-upload-area">
+                        <div class="upload-content">
+                            <div class="upload-icon">📷</div>
+                            <p class="upload-text">Add more images</p>
+                        </div>
+                        <input type="file" id="edit-image-input" multiple accept="image/*" hidden />
+                    </div>
+                    <div id="edit-image-preview" class="image-preview"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" id="cancel-edit">Cancel</button>
+                    <button type="submit" class="btn primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+</body>
+
+</html>
