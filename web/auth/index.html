@@ -4,71 +4,122 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>प्रchar — Sign in</title>
+    <title>प्रchar — AI Marketplace for Indian Artisans</title>
 
     <!-- Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Devanagari:wght@600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@500;600;700;800&display=swap"
         rel="stylesheet">
 
     <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
-    <!-- 🔹 Background layers -->
+    <!-- Background with video -->
     <div class="bg">
-        <div class="bg-blur"></div> <!-- fills edges with blurred image -->
-        <div class="bg-image"></div> <!-- full image, never cropped -->
+        <div class="bg-video-container">
+            <video class="bg-video" autoplay muted loop playsinline>
+                <source src="./prachar-bg.mp4" type="video/mp4">
+                <source src="./prachar-bg.webm" type="video/webm">
+                <div class="bg-fallback"></div>
+            </video>
+        </div>
     </div>
 
-    <main class="container">
-        <header class="brand">
-            <div class="logo-dot">✓</div>
-            <h1 class="title"><span class="dev">प्र</span>char</h1>
-            <p class="tag">Marketplace assistant for artisans</p>
-        </header>
+    <!-- Main container with liquid glass card -->
+    <div class="main-wrapper">
+        <div class="main-card">
+            <!-- Navigation -->
+            <nav class="nav-bar">
+                <div class="nav-left">
+                    <div class="logo">
+                        <div class="logo-icon">✓</div>
+                        <span class="logo-text"><span class="dev">प्र</span>char</span>
+                    </div>
+                </div>
+                <div class="nav-center">
+                    <a href="#" class="nav-link active">Home</a>
+                    <a href="../about/index.html" class="nav-link">About</a>
+                </div>
+                <div class="nav-right"></div>
+            </nav>
 
-        <section class="card">
-            <h2 class="card-title">Create your profile</h2>
-            <p class="card-sub">Sign in with your phone number to continue</p>
-
-            <form id="profile-form" class="form" onsubmit="return false;">
-                <div class="grid-2">
-                    <label class="field">
-                        <span>First name</span>
-                        <input id="firstName" placeholder="e.g., Ramesh" required />
-                    </label>
-                    <label class="field">
-                        <span>Last name</span>
-                        <input id="lastName" placeholder="e.g., Kumar" required />
-                    </label>
+            <!-- Hero Section with Background Image -->
+            <div class="hero-section">
+                <!-- Background Image -->
+                <div class="hero-bg">
+                    <img src="./prachar2.jpg" alt="Indian Artisans" class="hero-bg-image">
+                    <div class="hero-overlay"></div>
+                </div>
+                
+                <!-- Left Panel - Content -->
+                <div class="hero-content">
+                    <div class="content-wrapper">
+                        <h1 class="hero-title">
+                            Explore <span class="highlight">the world</span> of Indian crafts with us
+                        </h1>
+                        <p class="hero-subtitle">Discover possibilities of traditional artistry!</p>
+                    </div>
                 </div>
 
-                <label class="field">
-                    <span>Phone number</span>
-                    <input id="phone" inputmode="tel" placeholder="+91XXXXXXXXXX" required />
-                </label>
+                <!-- Right Panel - Auth Form -->
+                <div class="auth-panel">
+                    <div class="auth-card">
+                        <div class="auth-header">
+                            <h2 class="auth-title">Login to प्रchar</h2>
+                            <p class="auth-subtitle">Start your journey as a digital artisan</p>
+                        </div>
 
-                <button type="button" id="send-otp" class="btn primary">Send OTP</button>
+                        <form id="profile-form" class="form" onsubmit="return false;">
+                            <div class="grid-2">
+                                <label class="field">
+                                    <span>First name</span>
+                                    <input id="firstName" placeholder="e.g., Ramesh" required />
+                                </label>
+                                <label class="field">
+                                    <span>Last name</span>
+                                    <input id="lastName" placeholder="e.g., Kumar" required />
+                                </label>
+                            </div>
 
-                <div id="otp-block" class="otp hidden">
-                    <label class="field">
-                        <span>Enter 6-digit OTP</span>
-                        <input id="otp" inputmode="numeric" maxlength="6" placeholder="••••••" />
-                    </label>
-                    <button type="button" id="verify-otp" class="btn success">Verify & Save</button>
+                            <label class="field">
+                                <span>Phone number</span>
+                                <div class="phone-input-container">
+                                    <span class="phone-prefix">+91</span>
+                                    <input id="phone" inputmode="tel" placeholder="XXXXXXXXXX" required />
+                                </div>
+                            </label>
+
+                            <button type="button" id="send-otp" class="btn primary">
+                                <span class="btn-text">Send OTP</span>
+                                <span class="btn-loader hidden">Sending...</span>
+                            </button>
+
+                            <div id="otp-block" class="otp hidden">
+                                <label class="field">
+                                    <span>Enter 6-digit OTP</span>
+                                    <input id="otp" inputmode="numeric" maxlength="6" placeholder="••••••" />
+                                </label>
+                                <button type="button" id="verify-otp" class="btn success">
+                                    <span class="btn-text">Verify & Continue</span>
+                                    <span class="btn-loader hidden">Verifying...</span>
+                                </button>
+                            </div>
+
+                            <div id="recaptcha-container" class="recaptcha"></div>
+                        </form>
+
+                        <div id="notice" role="status" aria-live="polite"></div>
+
+                        <div class="auth-footer">
+                            <p>By joining, you agree to our <a href="#" class="link">Terms of Service</a> and <a href="#" class="link">Privacy Policy</a></p>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <div id="recaptcha-container" class="recaptcha"></div>
-            </form>
-
-            <div id="notice" role="status" aria-live="polite"></div>
-        </section>
-
-        <footer class="footer">
-            <span>© प्रchar • for Indian artisans</span>
-        </footer>
-    </main>
+        </div>
+    </div>
 
     <script type="module" src="./app.js"></script>
 </body>
