@@ -185,3 +185,9 @@ cython_debug/
 .env.local
 logs/
 .env.local
+secrets
+/secrets
+/secrets*
+.env.local
+/Users/crocks/Documents/Projects/hack_hack_hack/genai-hackathon/.env.local
+.env.local
