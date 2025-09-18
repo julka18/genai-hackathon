@@ -86,6 +86,7 @@ class NanoBananaEnhancer:
                 log.error(f"Error enhancing image {image_path}: {e}")
                 # Fallback to original image
                 enhanced_images.append(image_path)
+                log.error(f"")
         
         return enhanced_images
     

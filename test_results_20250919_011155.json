@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-09-19T01:11:46.359608",
+  "tests": {
+    "environment_check": {
+      "status": "passed",
+      "details": {
+        "success": true
+      }
+    },
+    "image_enhancement": {
+      "status": "passed",
+      "details": {
+        "success": true
+      }
+    },
+    "video_generation": {
+      "status": "passed",
+      "details": {
+        "success": true
+      }
+    },
+    "instagram_api": {
+      "status": "passed",
+      "details": {
+        "success": true
+      }
+    },
+    "telegram_integration": {
+      "status": "passed",
+      "details": {
+        "success": true
+      }
+    },
+    "full_pipeline": {
+      "status": "failed",
+      "details": {
+        "success": false
+      }
+    }
+  },
+  "overall_status": "partial_passed",
+  "passed_count": 5,
+  "total_count": 6
+}

@@ -1,17 +1,16 @@
 [project]
 name = "genai-hackathon"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "langflow>=1.5.1",
-    "python-dotenv>=1.1.1",
-    "requests>=2.32.5",
-    "google-cloud-firestore",
-    "google-generativeai>=0.7",
-    "google-auth>=2.0",
-    "fastapi>=0.116.1",
-    "uvicorn>=0.35.0",
-    "pillow>=11.3.0",
+  "langflow>=1.5.1",
+  "python-dotenv>=1.1.1",
+  "requests>=2.32.5",
+  "google-cloud-firestore",
+  "google-auth>=2.0",
+  "google-generativeai>=0.7",   # ✅ correct Gemini SDK
+  "fastapi>=0.116.1",
+  "uvicorn>=0.35.0",
+  "pillow>=10.0.0"              # ✅ safe pin; 11.3.0 may not exist on all indexes
+  # DO NOT add: google-genai ❌
 ]
