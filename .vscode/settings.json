@@ -13,5 +13,6 @@
     // organizeImports → cleans unused imports automatically.
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
-    }
+    },
+    "liveServer.settings.port": 5501
 }
