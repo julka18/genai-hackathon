@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 import uvicorn
+import requests
+from utilities.firebase_client import get_firebase_client
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -75,6 +77,11 @@ class CampaignMetadata(BaseModel):
     currency: str = "INR"
     hashtags: List[str] = []
     whatsapp_link: Optional[str] = None
+
+
+class ProcessUserPhotosRequest(BaseModel):
+    phone_number: str
+    product_details: str
 
 
 class PublishRequest(BaseModel):
@@ -442,6 +449,193 @@ async def health_check():
     }
 
 
+@app.post("/process-user-photos")
+async def process_user_photos(request: ProcessUserPhotosRequest):
+    """
+    Process photos for a user from Firebase, send to Lambda, and post to social media
+    
+    Args:
+        request: Contains phone_number and product_details
+        
+    Returns:
+        Processing status and posting results
+    """
+    try:
+        log.info(f"Processing photos for user: {request.phone_number}")
+        
+        # Step 1: Get Firebase client and fetch photos
+        firebase_client = get_firebase_client()
+        user_data = firebase_client.get_user_photos(request.phone_number)
+        
+        if user_data['photos_count'] == 0:
+            raise HTTPException(400, "No photos found for this user")
+        
+        # Step 2: Convert photos to base64 for Lambda
+        base64_images = firebase_client.convert_photos_to_base64(user_data['photos'])
+        
+        if not base64_images:
+            raise HTTPException(400, "Failed to convert photos to base64")
+        
+        # Step 3: Call Lambda API
+        lambda_payload = {
+            "product_details": request.product_details,
+            "images": base64_images,
+            "user_phone": request.phone_number
+        }
+        
+        log.info(f"Calling Lambda with {len(base64_images)} images")
+        
+        lambda_url = os.getenv('AWS_LAMBDA_URL', 'https://your-lambda-url.amazonaws.com/process')
+        
+        lambda_response = requests.post(
+            lambda_url,
+            json=lambda_payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=60  # Increased timeout for AI processing
+        )
+        
+        if lambda_response.status_code != 200:
+            raise HTTPException(500, f"Lambda call failed: {lambda_response.text}")
+        
+        lambda_result = lambda_response.json()
+        log.info("Lambda processing completed")
+        
+        # Step 4: Process Lambda response and post to social media
+        posting_results = await post_to_social_media(lambda_result, request.phone_number)
+        
+        # Return complete results
+        return {
+            "status": "success",
+            "phone_number": request.phone_number,
+            "images_processed": len(base64_images),
+            "lambda_response": lambda_result,
+            "posting_results": posting_results,
+            "message": "Photos processed and posted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error(f"Error processing photos for {request.phone_number}: {e}")
+        raise HTTPException(500, f"Processing failed: {str(e)}")
+
+
+async def post_to_social_media(lambda_result: dict, user_phone: str) -> dict:
+    """
+    Post Lambda-processed content to Telegram and Instagram
+    
+    Args:
+        lambda_result: Response from Lambda containing processed images and text
+        user_phone: User's phone number
+        
+    Returns:
+        Dictionary with posting results for each platform
+    """
+    posting_results = {}
+    
+    # Extract Lambda response data
+    # Assuming Lambda returns: 
+    # {
+    #   "processed_images": ["url1", "url2", ...],  # Public URLs to processed images
+    #   "generated_text": "caption text",
+    #   "hashtags": ["#tag1", "#tag2", ...],
+    #   "instagram_reel_url": "video_url"  # Optional reel URL
+    # }
+    
+    processed_images = lambda_result.get("processed_images", [])
+    generated_text = lambda_result.get("generated_text", "")
+    hashtags = lambda_result.get("hashtags", [])
+    reel_url = lambda_result.get("instagram_reel_url")
+    
+    # Default Telegram channels to post to
+    default_channels = [
+        "@prachar_artisans",  # Your main channel
+        "@artisan_showcase"   # Add more channels as needed
+    ]
+    
+    # 1. Post to Telegram
+    try:
+        log.info("Posting to Telegram...")
+        from scripts.telegram_poster import post_campaign
+        
+        # Format metadata for Telegram
+        telegram_metadata = {
+            "title_hi": "हस्तशिल्प उत्पाद",
+            "title_en": "Handcrafted Product", 
+            "description_hi": generated_text,
+            "hashtags": hashtags[:5],  # Limit hashtags
+            "cta_whatsapp": f"https://wa.me/{user_phone.replace('+', '')}"
+        }
+        
+        # Post using existing telegram poster
+        telegram_result = post_campaign(telegram_metadata, processed_images)
+        posting_results["telegram"] = {
+            "success": True,
+            "result": telegram_result
+        }
+        
+        log.info("✅ Telegram posting successful")
+        
+    except Exception as e:
+        log.error(f"❌ Telegram posting failed: {e}")
+        posting_results["telegram"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    # 2. Post to Instagram
+    try:
+        log.info("Posting to Instagram...")
+        from scripts.instagram_poster import InstagramGraphAPI, create_instagram_caption
+        
+        # Check if Instagram credentials are available
+        if not os.getenv("INSTAGRAM_ACCESS_TOKEN"):
+            posting_results["instagram"] = {
+                "success": False,
+                "error": "Instagram credentials not configured"
+            }
+        else:
+            instagram_api = InstagramGraphAPI()
+            
+            # Create Instagram caption
+            instagram_metadata = {
+                "titles": {"en": "Handcrafted Product", "hi": "हस्तशिल्प उत्पाद"},
+                "description": {"hi": generated_text},
+                "hashtags": hashtags
+            }
+            caption = create_instagram_caption(instagram_metadata)
+            
+            # Post reel if available, otherwise post first image
+            if reel_url:
+                # Validate reel URL first
+                if instagram_api.validate_media_url(reel_url, "REELS"):
+                    result = instagram_api.post_reel(reel_url, caption)
+                    posting_results["instagram"] = result
+                else:
+                    raise Exception("Invalid reel URL from Lambda")
+            elif processed_images:
+                # Post first processed image
+                first_image = processed_images[0]
+                if instagram_api.validate_media_url(first_image, "IMAGE"):
+                    result = instagram_api.post_image(first_image, caption)
+                    posting_results["instagram"] = result
+                else:
+                    raise Exception("Invalid image URL from Lambda")
+            else:
+                raise Exception("No valid media from Lambda for Instagram")
+            
+            log.info("✅ Instagram posting successful")
+    
+    except Exception as e:
+        log.error(f"❌ Instagram posting failed: {e}")
+        posting_results["instagram"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    return posting_results
+
+
 # Startup/shutdown events
 @app.on_event("startup")
 async def startup_event():
@@ -452,6 +646,7 @@ async def startup_event():
     # Create required directories
     UPLOAD_DIR.mkdir(exist_ok=True)
     
+
     # Test pipeline initialization
     try:
         log.info("Testing pipeline initialization...")
