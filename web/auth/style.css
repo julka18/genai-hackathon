@@ -23,7 +23,8 @@
     padding: 0;
 }
 
-html, body {
+html,
+body {
     height: 100%;
     font-family: 'Inter', system-ui, sans-serif;
     color: var(--text-primary);
@@ -130,7 +131,8 @@ body {
 }
 
 .nav-right {
-    width: 120px; /* Same width as nav-left to balance the layout */
+    width: 120px;
+    /* Same width as nav-left to balance the layout */
 }
 
 .nav-link {
@@ -211,12 +213,10 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        135deg,
-        rgba(0, 0, 0, 0.6) 0%,
-        rgba(0, 0, 0, 0.4) 50%,
-        rgba(0, 0, 0, 0.7) 100%
-    );
+    background: linear-gradient(135deg,
+            rgba(0, 0, 0, 0.6) 0%,
+            rgba(0, 0, 0, 0.4) 50%,
+            rgba(0, 0, 0, 0.7) 100%);
     z-index: 2;
 }
 
@@ -867,12 +867,12 @@ body {
     transition: all 0.3s ease;
 }
 
-.checkbox-field input[type="checkbox"]:checked + .checkmark {
+.checkbox-field input[type="checkbox"]:checked+.checkmark {
     background: var(--orange);
     border-color: var(--orange);
 }
 
-.checkbox-field input[type="checkbox"]:checked + .checkmark::after {
+.checkbox-field input[type="checkbox"]:checked+.checkmark::after {
     content: '✓';
     position: absolute;
     top: 50%;
@@ -1105,6 +1105,18 @@ body {
 .product-card:hover {
     transform: translateY(-5px);
 }
+
+.product-image img {
+    width: 100%;
+    height: 180px;
+    /* adjust to your card */
+    object-fit: cover;
+    /* crop to fill nicely */
+    display: block;
+    border-radius: 12px 12px 0 0;
+    /* if your card has rounded corners */
+}
+
 
 .product-image {
     width: 100%;
@@ -1673,163 +1685,163 @@ body {
         grid-template-columns: 1fr;
         min-height: 700px;
     }
-    
+
     .hero-content {
         padding: 40px 30px;
         text-align: center;
     }
-    
+
     .hero-title {
         font-size: 36px;
     }
-    
+
     .auth-panel {
         padding: 30px 20px;
     }
-    
+
     .auth-card {
         padding: 25px 20px;
     }
-    
+
     .nav-center {
         gap: 20px;
         position: static;
         transform: none;
     }
-    
+
     .nav-bar {
         flex-direction: column;
         gap: 15px;
     }
-    
+
 }
 
 @media (max-width: 768px) {
     .main-wrapper {
         padding: 10px;
     }
-    
+
     .nav-bar {
         padding: 15px 20px;
         flex-wrap: wrap;
         gap: 15px;
     }
-    
+
     .nav-right {
         order: -1;
         width: 100%;
         justify-content: space-between;
     }
-    
-    
+
+
     .hero-section {
         min-height: 600px;
     }
-    
+
     .hero-content {
         padding: 30px 20px;
     }
-    
+
     .hero-title {
         font-size: 28px;
     }
-    
+
     .auth-panel {
         padding: 30px 20px;
     }
-    
+
     .auth-card {
         padding: 20px 16px;
     }
-    
+
     .grid-2 {
         grid-template-columns: 1fr;
     }
-    
+
     .about-card {
         padding: 30px 20px;
     }
-    
+
     .about-title {
         font-size: 36px;
     }
-    
+
     .about-subtitle {
         font-size: 18px;
     }
-    
+
     .features-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .cta-buttons {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .upload-content-section {
         grid-template-columns: 1fr;
         gap: 30px;
         padding: 20px;
     }
-    
+
     .upload-form-column,
     .upload-summary-column {
         padding: 20px;
     }
-    
+
     .form-row-2 {
         grid-template-columns: 1fr;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         padding: 20px;
     }
-    
+
     .action-buttons {
         grid-template-columns: 1fr;
     }
-    
+
     .products-grid {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         padding: 20px;
     }
-    
+
     .analytics-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .contact-methods {
         grid-template-columns: 1fr;
     }
-    
+
     .profile-sections {
         padding: 20px;
     }
-    
+
     .profile-avatar {
         flex-direction: column;
         text-align: center;
         gap: 15px;
     }
-    
+
 }
 
 @media (max-width: 480px) {
     .hero-title {
         font-size: 24px;
     }
-    
+
     .hero-subtitle {
         font-size: 16px;
     }
-    
+
     .auth-title {
         font-size: 24px;
     }
-    
+
     .btn {
         height: 44px;
         font-size: 13px;

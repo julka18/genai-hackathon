@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Upload Photos – प्रchar</title>
+
+    <!-- Shared site styles -->
+    <link rel="stylesheet" href="../auth/style.css" />
+
+    <style>
+        .wrap {
+            max-width: 880px;
+            margin: 48px auto;
+            padding: 0 16px;
+        }
+
+        .card {
+            background: var(--surface, #0f1214);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .muted {
+            opacity: .75;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .upload-drop {
+            border: 2px dashed rgba(255, 255, 255, .15);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .upload-drop:hover {
+            border-color: rgba(255, 255, 255, .25);
+        }
+
+        .thumbs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .thumb {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #151a1f;
+        }
+
+        .thumb img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumb .tag {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 11px;
+            background: #ffffff20;
+            padding: 2px 6px;
+            border-radius: 999px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn.primary {
+            background: #ff6a2b;
+            color: #111;
+        }
+
+        .btn.secondary {
+            background: #ffffff12;
+        }
+
+        .btn.outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, .25);
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        /* Step 2 area (hidden by default) */
+        .step2 {
+            display: none;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .step2 h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .cta-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .cta-grid .btn {
+            min-width: 260px;
+        }
+
+        /* Tiny toast */
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            background: #111;
+            color: #fff;
+            border: 1px solid #ff6a2b;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: .2px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            display: none;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Navbar (same as other pages) -->
+        <nav class="navbar">
+            <div class="nav-left"><a href="../home/index.html" class="logo">प्रchar</a></div>
+            <div class="nav-center">
+                <a href="../home/index.html">Home</a>
+                <a href="../upload/index.html" class="active">Upload</a>
+                <a href="../products/index.html">My Products</a>
+                <a href="../profile/index.html">Profile</a>
+            </div>
+            <div class="nav-right">
+                <span class="welcome-text">Welcome!</span>
+                <button id="logout-btn" class="btn small">Logout</button>
+            </div>
+        </nav>
+
+        <div class="wrap">
+            <div class="card">
+                <div class="title">Add Photos</div>
+                <div class="muted">Upload up to 5 images (JPG, PNG, WebP). First image becomes the main thumbnail.</div>
+
+                <!-- Drop / click area -->
+                <div id="drop" class="upload-drop">
+                    <input id="file-input" type="file" accept="image/*" multiple hidden />
+                    <button id="choose-files" class="btn secondary" type="button">Browse files</button>
+                    <div class="muted" style="margin-top:6px;">Drag & drop or browse images to add.</div>
+                </div>
+
+                <!-- Preview -->
+                <div id="thumbs" class="thumbs"></div>
+
+                <!-- SINGLE ROW: Back + Next -->
+                <div class="row" style="margin-top:16px;">
+                    <a id="btn-back" class="btn">Back</a>
+                    <div class="actions">
+                        <button id="btn-next" class="btn primary" type="button">Next</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2 (hidden until Next): pick AI action -->
+                <div id="step2" class="step2">
+                    <h3>What would you like to do next?</h3>
+                    <div class="cta-grid">
+                        <button id="btn-ai-and-post" class="btn outline" type="button">
+                            Generate AI Ads &amp; Post on Meta &amp; Telegram
+                        </button>
+                        <button id="btn-post-only" class="btn outline" type="button">
+                            Post on Meta &amp; Telegram
+                        </button>
+                    </div>
+                </div>
+
+                <div id="notice" class="muted" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- tiny toast -->
+    <div id="toast" class="toast">yaha se julka ka kaam</div>
+
+    <script type="module" src="./photos.js"></script>
+</body>
+
+</html>

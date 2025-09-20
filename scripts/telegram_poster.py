@@ -1,87 +1,112 @@
 # scripts/telegram_poster.py
+"""
+Telegram campaign poster for प्रchar
+Now supports base64 images directly (no Cloudinary / local files).
+"""
+
 import os
+import base64
 import requests
+from io import BytesIO
 from dotenv import load_dotenv
+from utilities.logger import get_logger, step
 
-try:
-    from utilities.logger import get_logger
-    log = get_logger("telegram_poster")
-except Exception:
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    log = logging.getLogger("telegram_poster")
-
+# load env
 load_dotenv(".env.local")
+
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHANNEL = os.getenv("TELEGRAM_CHANNEL")
-BASE = f"https://api.telegram.org/bot{TOKEN}"
-TIMEOUT = 60
 
-def _ensure_env():
-    if not TOKEN or not CHANNEL:
-        raise RuntimeError("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHANNEL")
+log = get_logger("telegram_poster")
 
-def _is_url(path: str) -> bool:
-    return path.startswith("http://") or path.startswith("https://")
+API_URL = f"https://api.telegram.org/bot{TOKEN}"
 
-def _send_photo(path_or_url: str, caption: str | None = None, reply_to: int | None = None) -> dict:
-    """Works with either a local file path or a public URL."""
-    _ensure_env()
-    url = f"{BASE}/sendPhoto"
-    data = {"chat_id": CHANNEL, "allow_sending_without_reply": True}
+
+def _decode_base64_image(data_url: str) -> BytesIO:
+    """
+    Convert a base64 data URL string into a BytesIO stream.
+    Expects format like: data:image/jpeg;base64,/9j/4AAQSk...
+    """
+    if "," in data_url:
+        _, encoded = data_url.split(",", 1)
+    else:
+        encoded = data_url
+    img_bytes = base64.b64decode(encoded)
+    return BytesIO(img_bytes)
+
+
+def _send_photo(photo_stream: BytesIO, caption: str = None, reply_to: int = None):
+    """
+    Send a single photo to Telegram.
+    """
+    url = f"{API_URL}/sendPhoto"
+    files = {"photo": photo_stream}
+    data = {"chat_id": CHANNEL}
     if caption:
         data["caption"] = caption
+        data["parse_mode"] = "HTML"
     if reply_to:
         data["reply_to_message_id"] = reply_to
 
-    if _is_url(path_or_url):
-        # send URL directly
-        data["photo"] = path_or_url
-        r = requests.post(url, data=data, timeout=TIMEOUT)
-    else:
-        # send local file
-        with open(path_or_url, "rb") as f:
-            files = {"photo": f}
-            r = requests.post(url, data=data, files=files, timeout=TIMEOUT)
+    resp = requests.post(url, data=data, files=files, timeout=30)
+    if not resp.ok:
+        raise Exception(f"Telegram sendPhoto failed: {resp.text}")
+    return resp.json()["result"]["message_id"]
 
-    if r.status_code >= 400:
-        raise RuntimeError(f"Telegram sendPhoto failed: {r.status_code} {r.text}")
-    return r.json()["result"]
 
-def post_campaign(metadata: dict, media: list[str]) -> dict:
+def post_campaign(metadata: dict, media_base64: list[str]):
     """
-    metadata: legacy dict (title_en/title_hi/description_hi/price/hashtags/cta_whatsapp)
-    media: list of file paths OR public URLs; first item is the head.
+    Post campaign to Telegram.
+    Args:
+        metadata: dict with title/description/hashtags/cta
+        media_base64: list of base64 strings (data URLs)
+
+    Flow:
+    - First image → main caption post
+    - Remaining images → reply chain
     """
-    _ensure_env()
-    title_hi = metadata.get("title_hi") or ""
-    title_en = metadata.get("title_en") or ""
-    desc_hi  = metadata.get("description_hi") or ""
-    price    = metadata.get("price") or {}
-    low, high, cur = price.get("low"), price.get("high"), price.get("currency", "INR")
-    tags = " ".join(metadata.get("hashtags", []))
-    cta  = metadata.get("cta_whatsapp") or ""
+    if not TOKEN or not CHANNEL:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN or TELEGRAM_CHANNEL missing in .env.local")
 
-    price_line = f"₹{low}–₹{high} {cur}" if (low is not None and high is not None) else ""
-    caption = "\n".join([s for s in [
-        f"{title_hi} · {title_en}".strip(" ·"),
-        price_line,
-        desc_hi,
-        "",
-        tags if tags else None,
-        "",
-        f"Buy: {cta}" if cta else None
-    ] if s is not None and s != ""])
+    title_en = metadata.get("title_en", "")
+    title_hi = metadata.get("title_hi", "")
+    desc_hi = metadata.get("description_hi", "")
+    price = metadata.get("price", {})
+    hashtags = " ".join(metadata.get("hashtags", []))
+    cta = metadata.get("cta_whatsapp", "")
 
-    head = media[0]
-    log.info(f"[प्रchar] Telegram head: {head}")
-    head_msg = _send_photo(head, caption=caption)
-    thread_id = head_msg["message_id"]
+    caption_parts = []
+    if title_hi or title_en:
+        caption_parts.append(f"<b>{title_hi} {title_en}</b>")
+    if desc_hi:
+        caption_parts.append(desc_hi)
+    if price:
+        low = price.get("low")
+        high = price.get("high")
+        cur = price.get("currency", "INR")
+        if low and high:
+            caption_parts.append(f"💰 {low}–{high} {cur}")
+    if hashtags:
+        caption_parts.append(hashtags)
+    if cta:
+        caption_parts.append(f"<a href='{cta}'>Order on WhatsApp</a>")
 
-    for m in media[1:]:
-        log.info(f"Reply media: {m}")
-        _send_photo(m, reply_to=thread_id)
+    caption = "\n".join(caption_parts)
 
-    result = {"platform": "telegram", "thread_head_id": thread_id, "count": len(media)}
-    log.info(f"[प्रchar] Telegram publish complete: {result}")
-    return result
+    with step("Posting campaign to Telegram", items=len(media_base64)):
+        thread_id = None
+        for idx, b64 in enumerate(media_base64):
+            try:
+                photo_stream = _decode_base64_image(b64)
+                if idx == 0:
+                    # head post with caption
+                    thread_id = _send_photo(photo_stream, caption=caption)
+                    log.info("Head post sent (msg_id=%s)", thread_id)
+                else:
+                    # replies
+                    _send_photo(photo_stream, reply_to=thread_id)
+                    log.info("Reply image %s sent", idx + 1)
+            except Exception as e:
+                log.error("Error posting image %s: %s", idx + 1, e)
+
+    return {"status": "ok", "thread_id": thread_id}

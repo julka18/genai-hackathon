@@ -1,224 +1,163 @@
-<!doctype html>
-<html lang="hi">
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>प्रchar — Upload Your Products</title>
+    <title>Upload Product – प्रchar</title>
 
-    <!-- Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@500;600;700;800&display=swap"
-        rel="stylesheet">
+    <!-- Global site styles (same as other pages) -->
+    <link rel="stylesheet" href="/web/auth/style.css" />
+    <style>
+        .wrap {
+            max-width: 860px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
 
-    <link rel="stylesheet" href="../auth/style.css" />
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 14px;
+        }
+
+        .row {
+            display: grid;
+            gap: 12px;
+        }
+
+        .row-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        label {
+            font-size: 12px;
+            opacity: .9;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+
+        #notice {
+            margin-top: 8px;
+            font-size: 12px;
+            opacity: .8;
+            min-height: 18px;
+        }
+
+        @media (max-width: 720px) {
+            .row-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Background with video -->
-    <div class="bg">
-        <div class="bg-video-container">
-            <video class="bg-video" autoplay muted loop playsinline>
-                <source src="../auth/prachar-bg.mp4" type="video/mp4">
-                <source src="../auth/prachar-bg.webm" type="video/webm">
-                <div class="bg-fallback"></div>
-            </video>
+    <div class="app">
+        <!-- navbar (copied from the good-looking pages) -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <a class="logo" href="/web/home/index.html"><span class="logo-icon">✓</span><span
+                        class="logo-text"><span class="dev">प्र</span>char</span></a>
+            </div>
+            <div class="nav-center">
+                <a href="/web/home/index.html">Home</a>
+                <a class="active" href="/web/upload/index.html">Upload</a>
+                <a href="/web/products/index.html">My Products</a>
+                <a href="/web/profile/index.html">Profile</a>
+            </div>
+            <div class="nav-right">
+                <span id="welcome-user">Welcome!</span>
+                <button id="logout-btn" class="btn small">Logout</button>
+            </div>
+        </nav>
+
+        <div class="wrap">
+            <div class="card">
+                <h2 class="h2">Upload Your Product (Step 1: Details)</h2>
+
+                <div class="row">
+                    <div>
+                        <label for="productName">Product Name</label>
+                        <input id="productName" type="text" placeholder="e.g., Handwoven Silk Saree">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div>
+                        <label for="category">Category</label>
+                        <select id="category">
+                            <option value="">Select Category</option>
+                            <option value="textiles">Textiles & Fabrics</option>
+                            <option value="jewelry">Jewelry</option>
+                            <option value="pottery">Pottery</option>
+                            <option value="woodwork">Woodwork</option>
+                            <option value="paintings">Paintings</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div>
+                        <label for="description">Description (English)</label>
+                        <textarea id="description" rows="3"
+                            placeholder="Describe your product, story, and uniqueness..."></textarea>
+                    </div>
+                </div>
+
+                <div class="row row-2">
+                    <div>
+                        <label for="priceLow">Min Price (₹)</label>
+                        <input id="priceLow" type="number" placeholder="e.g., 500">
+                    </div>
+                    <div>
+                        <label for="priceHigh">Max Price (₹)</label>
+                        <input id="priceHigh" type="number" placeholder="e.g., 1200">
+                    </div>
+                </div>
+
+                <div class="row row-2">
+                    <div>
+                        <label for="hashtags">Hashtags</label>
+                        <input id="hashtags" type="text" placeholder="#kalamkari #handmade">
+                    </div>
+                    <div>
+                        <label for="ctaWhatsapp">WhatsApp CTA Link</label>
+                        <input id="ctaWhatsapp" type="text" placeholder="https://wa.me/91...">
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="btn-save-draft" type="button" class="btn secondary">Save as Draft</button>
+                    <button id="btn-next" type="button" class="btn primary">Next</button>
+                </div>
+                <div id="notice"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Main container with liquid glass card -->
-    <div class="main-wrapper">
-        <div class="main-card">
-            <!-- Navigation -->
-            <nav class="nav-bar">
-                <div class="nav-left">
-                    <div class="logo">
-                        <div class="logo-icon">✓</div>
-                        <span class="logo-text"><span class="dev">प्र</span>char</span>
-                    </div>
-                </div>
-                <div class="nav-center">
-                    <a href="../home/index.html" class="nav-link">Home</a>
-                    <a href="#" class="nav-link active">Upload</a>
-                    <a href="../products/index.html" class="nav-link">My Products</a>
-                    <a href="../profile/index.html" class="nav-link">Profile</a>
-                </div>
-                <div class="nav-right">
-                    <span class="welcome-text">Welcome back!</span>
-                    <button class="logout-btn" id="logout-btn">Logout</button>
-                </div>
-            </nav>
-
-            <!-- Page Title -->
-            <div class="page-title-section">
-                <h1 class="page-title">Upload Your Product to प्रchar</h1>
-                <p class="page-subtitle">Showcase your traditional crafts to the world</p>
-            </div>
-
-            <!-- Main Content - Two Column Layout -->
-            <div class="upload-content-section">
-                <!-- Left Column - Upload Form -->
-                <div class="upload-form-column">
-                    <form id="upload-form" class="upload-form" onsubmit="return false;">
-                        <!-- 1. Product Information -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <span class="section-number">1</span>
-                                <span class="section-label">Product Information</span>
-                            </div>
-                            
-                            <div class="form-grid">
-                                <div class="form-row">
-                                    <label class="field">
-                                        <span>Product Name</span>
-                                        <input id="productName" placeholder="e.g., Handwoven Silk Saree" required />
-                                    </label>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <label class="field">
-                                        <span>Category</span>
-                                        <select id="category" required>
-                                            <option value="">Select Category</option>
-                                            <option value="textiles">Textiles & Fabrics</option>
-                                            <option value="jewelry">Jewelry & Accessories</option>
-                                            <option value="pottery">Pottery & Ceramics</option>
-                                            <option value="woodwork">Woodwork & Carving</option>
-                                            <option value="metalwork">Metalwork & Brass</option>
-                                            <option value="paintings">Paintings & Art</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </label>
-                                </div>
-
-                                <div class="form-row">
-                                    <label class="field">
-                                        <span>Description</span>
-                                        <textarea id="description" placeholder="Describe your product, its unique features, and the story behind it..." rows="3" required></textarea>
-                                    </label>
-                                </div>
-
-                                <div class="form-row form-row-2">
-                                    <label class="field">
-                                        <span>Price (₹)</span>
-                                        <input id="price" type="number" placeholder="e.g., 2500" min="1" required />
-                                    </label>
-                                    <label class="field">
-                                        <span>Quantity</span>
-                                        <input id="quantity" type="number" placeholder="e.g., 5" min="1" required />
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Product Images -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <span class="section-number">2</span>
-                                <span class="section-label">Product Images</span>
-                            </div>
-                            
-                            <div class="upload-area" id="upload-area">
-                                <div class="upload-content">
-                                    <div class="upload-icon">📷</div>
-                                    <p class="upload-text">Drag & drop images here or <span class="upload-link">browse files</span></p>
-                                    <p class="upload-hint">Upload up to 5 images (JPG, PNG, max 5MB each)</p>
-                                </div>
-                                <input type="file" id="image-input" multiple accept="image/*" hidden />
-                            </div>
-                            <div id="image-preview" class="image-preview"></div>
-                        </div>
-
-                        <!-- 3. AI Marketing Options -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <span class="section-number">3</span>
-                                <span class="section-label">AI Marketing</span>
-                            </div>
-                            
-                            <div class="ai-options">
-                                <label class="checkbox-field">
-                                    <input type="checkbox" id="generate-caption" checked />
-                                    <span class="checkmark"></span>
-                                    <span class="checkbox-text">Generate AI-powered descriptions</span>
-                                </label>
-                                <label class="checkbox-field">
-                                    <input type="checkbox" id="social-campaigns" checked />
-                                    <span class="checkmark"></span>
-                                    <span class="checkbox-text">Create social media campaigns</span>
-                                </label>
-                                <label class="checkbox-field">
-                                    <input type="checkbox" id="telegram-posts" checked />
-                                    <span class="checkmark"></span>
-                                    <span class="checkbox-text">Post to प्रchar Telegram</span>
-                                </label>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Right Column - Summary -->
-                <div class="upload-summary-column">
-                    <div class="summary-card">
-                        <h3 class="summary-title">Upload Summary</h3>
-                        
-                        <div class="summary-section">
-                            <div class="summary-item">
-                                <span class="summary-label">Product Name</span>
-                                <span class="summary-value" id="summary-name">-</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">Category</span>
-                                <span class="summary-value" id="summary-category">-</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">Price</span>
-                                <span class="summary-value" id="summary-price">₹0</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">Quantity</span>
-                                <span class="summary-value" id="summary-quantity">0</span>
-                            </div>
-                        </div>
-
-                        <div class="summary-divider"></div>
-
-                        <div class="summary-section">
-                            <div class="summary-item">
-                                <span class="summary-label">Images</span>
-                                <span class="summary-value" id="summary-images">0/5</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">AI Features</span>
-                                <span class="summary-value" id="summary-ai">3 enabled</span>
-                            </div>
-                        </div>
-
-                        <div class="summary-divider"></div>
-
-                        <div class="summary-section">
-                            <div class="summary-item total-item">
-                                <span class="summary-label">Total Value</span>
-                                <span class="summary-value" id="summary-total">₹0</span>
-                            </div>
-                        </div>
-
-                        <div class="summary-actions">
-                            <button type="button" id="save-draft" class="btn secondary">Save as Draft</button>
-                            <button type="button" id="publish-product" class="btn primary">
-                                <span class="btn-text">Publish Product</span>
-                                <span class="btn-loader hidden">Publishing...</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="notice" role="status" aria-live="polite"></div>
-        </div>
-    </div>
-
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./step1.js"></script>
 </body>
 
 </html>
