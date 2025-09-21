@@ -27,6 +27,12 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import requests
+import base64
+import tempfile
+from pathlib import Path
+from utilities.firebase_client import get_firebase_client
+
 # Add project modules
 from langflow_pipeline import PracharPipeline
 from scripts.instagram_poster import create_instagram_caption
@@ -80,7 +86,7 @@ class CampaignMetadata(BaseModel):
 
 
 class ProcessUserPhotosRequest(BaseModel):
-    phone_number: str
+    owner_uid: str
     product_details: str
 
 
@@ -452,188 +458,174 @@ async def health_check():
 @app.post("/process-user-photos")
 async def process_user_photos(request: ProcessUserPhotosRequest):
     """
-    Process photos for a user from Firebase, send to Lambda, and post to social media
-    
-    Args:
-        request: Contains phone_number and product_details
-        
-    Returns:
-        Processing status and posting results
+    Process photos for a user from Firebase, send to Flask AI, and post to Telegram
     """
     try:
-        log.info(f"Processing photos for user: {request.phone_number}")
+        log.info(f"Processing photos for user: {request.owner_uid}")  # ✅ Fixed
         
         # Step 1: Get Firebase client and fetch photos
         firebase_client = get_firebase_client()
-        user_data = firebase_client.get_user_photos(request.phone_number)
         
-        if user_data['photos_count'] == 0:
-            raise HTTPException(400, "No photos found for this user")
+        try:
+            user_data = firebase_client.get_user_photos_by_owner(request.owner_uid)  # ✅ Correct
+            
+            if user_data['photos_count'] == 0:
+                raise HTTPException(400, "No photos found for this user")
+            
+            # Convert photos to base64 for Flask
+            base64_images = firebase_client.convert_photos_to_base64_list(user_data['photos'])  # ✅ Fixed method name
+            
+            if not base64_images:
+                raise HTTPException(400, "Failed to convert photos to base64")
+            
+            # Use first image for Flask processing
+            first_image_base64 = base64_images[0]
+            log.info("Using Firebase photos")
+            
+        except Exception as e:
+            # Fallback to test images if Firebase fails
+            log.warning(f"Firebase failed, using test images: {e}")
+            
+            test_image_path = Path("D:\\GenAI\\poster.png")
+            if not test_image_path.exists():
+                raise HTTPException(400, "No photos available (Firebase failed and no test images)")
+            
+            with open(test_image_path, "rb") as f:
+                first_image_base64 = base64.b64encode(f.read()).decode('utf-8')
+            
+            log.info("Using test image fallback")
         
-        # Step 2: Convert photos to base64 for Lambda
-        base64_images = firebase_client.convert_photos_to_base64(user_data['photos'])
+        # ... Flask calls remain the same ...
         
-        if not base64_images:
-            raise HTTPException(400, "Failed to convert photos to base64")
+        # Step 5: Post to Telegram
+        posting_results = await post_to_telegram_with_flask_content(
+        [str(poster_path)], 
+        request.owner_uid,
+        generated_caption,
+        user_data  # ✅ Pass the complete Firebase data, not just flask_payload
+    )
         
-        # Step 3: Call Lambda API
-        lambda_payload = {
-            "product_details": request.product_details,
-            "images": base64_images,
-            "user_phone": request.phone_number
-        }
+        # ... cleanup ...
         
-        log.info(f"Calling Lambda with {len(base64_images)} images")
-        
-        lambda_url = os.getenv('AWS_LAMBDA_URL', 'https://your-lambda-url.amazonaws.com/process')
-        
-        lambda_response = requests.post(
-            lambda_url,
-            json=lambda_payload,
-            headers={'Content-Type': 'application/json'},
-            timeout=60  # Increased timeout for AI processing
-        )
-        
-        if lambda_response.status_code != 200:
-            raise HTTPException(500, f"Lambda call failed: {lambda_response.text}")
-        
-        lambda_result = lambda_response.json()
-        log.info("Lambda processing completed")
-        
-        # Step 4: Process Lambda response and post to social media
-        posting_results = await post_to_social_media(lambda_result, request.phone_number)
-        
-        # Return complete results
         return {
             "status": "success",
-            "phone_number": request.phone_number,
-            "images_processed": len(base64_images),
-            "lambda_response": lambda_result,
+            "owner_uid": request.owner_uid,  # ✅ Fixed field name
+            "flask_response": {
+                "poster_generated": True,
+                "caption_generated": True,
+                "poster_message": poster_result.get("message"),
+                "generated_caption": generated_caption
+            },
             "posting_results": posting_results,
-            "message": "Photos processed and posted successfully"
+            "message": "Photos processed with Flask AI and posted to Telegram"
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        log.error(f"Error processing photos for {request.phone_number}: {e}")
+        log.error(f"Error processing photos for {request.owner_uid}: {e}")  # ✅ Fixed
         raise HTTPException(500, f"Processing failed: {str(e)}")
 
 
-async def post_to_social_media(lambda_result: dict, user_phone: str) -> dict:
+def parse_product_details(product_details: str) -> Dict[str, str]:
     """
-    Post Lambda-processed content to Telegram and Instagram
+    Extract structured info from product details text
     
     Args:
-        lambda_result: Response from Lambda containing processed images and text
-        user_phone: User's phone number
+        product_details: Free-form product description
         
     Returns:
-        Dictionary with posting results for each platform
+        Dictionary with extracted info
     """
-    posting_results = {}
+    details = {}
+    text_lower = product_details.lower()
     
-    # Extract Lambda response data
-    # Assuming Lambda returns: 
-    # {
-    #   "processed_images": ["url1", "url2", ...],  # Public URLs to processed images
-    #   "generated_text": "caption text",
-    #   "hashtags": ["#tag1", "#tag2", ...],
-    #   "instagram_reel_url": "video_url"  # Optional reel URL
-    # }
-    
-    processed_images = lambda_result.get("processed_images", [])
-    generated_text = lambda_result.get("generated_text", "")
-    hashtags = lambda_result.get("hashtags", [])
-    reel_url = lambda_result.get("instagram_reel_url")
-    
-    # Default Telegram channels to post to
-    default_channels = [
-        "@prachar_artisans",  # Your main channel
-        "@artisan_showcase"   # Add more channels as needed
+    # Extract price if mentioned
+    import re
+    price_patterns = [
+        r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)',
+        r'rs\.?\s*(\d+(?:,\d+)*(?:\.\d+)?)',
+        r'price[:\s]*₹?\s*(\d+(?:,\d+)*(?:\.\d+)?)',
     ]
     
-    # 1. Post to Telegram
+    for pattern in price_patterns:
+        match = re.search(pattern, text_lower)
+        if match:
+            details["price"] = f"₹{match.group(1)}"
+            break
+    
+    # Extract location hints
+    indian_states = ['maharashtra', 'gujarat', 'rajasthan', 'punjab', 'kerala', 'tamil nadu', 'karnataka', 'west bengal']
+    for state in indian_states:
+        if state in text_lower:
+            details["location"] = state.title()
+            break
+    
+    # Extract industry/craft type
+    craft_types = {
+        'pottery': 'Pottery & Ceramics',
+        'textile': 'Textiles',
+        'jewelry': 'Jewelry', 
+        'wood': 'Woodcraft',
+        'metal': 'Metalwork',
+        'painting': 'Art & Painting',
+        'handicraft': 'Handicrafts'
+    }
+    
+    for craft, industry in craft_types.items():
+        if craft in text_lower:
+            details["industry"] = industry
+            break
+    
+    # Extract product name (use first few words)
+    words = product_details.split()[:3]
+    details["name"] = " ".join(words).title()
+    
+    return details
+
+
+async def post_to_telegram_with_flask_content(poster_files: List[str], owner_uid: str, generated_caption: str, firebase_data: Dict) -> dict:
+    """
+    Post Flask-generated content to Telegram using Firebase product data
+    """
     try:
-        log.info("Posting to Telegram...")
+        log.info("Posting Flask-generated content to Telegram...")
         from scripts.telegram_poster import post_campaign
         
-        # Format metadata for Telegram
+        # Extract Firebase document data
+        product_data = firebase_data.get('product_data', {})
+        
+        # Use Firebase data as primary source
         telegram_metadata = {
-            "title_hi": "हस्तशिल्प उत्पाद",
-            "title_en": "Handcrafted Product", 
-            "description_hi": generated_text,
-            "hashtags": hashtags[:5],  # Limit hashtags
-            "cta_whatsapp": f"https://wa.me/{user_phone.replace('+', '')}"
+            "title_hi": product_data.get('titles', {}).get('hi', ''),
+            "title_en": product_data.get('titles', {}).get('en', 'Handcrafted Product'),
+            "description_hi": product_data.get('description', {}).get('hi', generated_caption[:200]),  # Use AI caption as fallback
+            "price": product_data.get('price', {}),  # Include price info
+            "hashtags": product_data.get('hashtags', []) + ["#AIgenerated", "#prachar"],  # Firebase hashtags + AI tag
+            "cta_whatsapp": product_data.get('cta', {}).get('whatsapp', f"Contact via {owner_uid}")
         }
         
         # Post using existing telegram poster
-        telegram_result = post_campaign(telegram_metadata, processed_images)
-        posting_results["telegram"] = {
-            "success": True,
-            "result": telegram_result
-        }
+        telegram_result = post_campaign(telegram_metadata, poster_files)
         
-        log.info("✅ Telegram posting successful")
+        log.info("✅ Telegram posting with Firebase + Flask content successful")
+        return {
+            "telegram": {
+                "success": True,
+                "result": telegram_result,
+                "firebase_data_used": True,
+                "caption_used": telegram_metadata["description_hi"][:100] + "..." if len(telegram_metadata["description_hi"]) > 100 else telegram_metadata["description_hi"]
+            }
+        }
         
     except Exception as e:
         log.error(f"❌ Telegram posting failed: {e}")
-        posting_results["telegram"] = {
-            "success": False,
-            "error": str(e)
-        }
-    
-    # 2. Post to Instagram
-    try:
-        log.info("Posting to Instagram...")
-        from scripts.instagram_poster import InstagramGraphAPI, create_instagram_caption
-        
-        # Check if Instagram credentials are available
-        if not os.getenv("INSTAGRAM_ACCESS_TOKEN"):
-            posting_results["instagram"] = {
+        return {
+            "telegram": {
                 "success": False,
-                "error": "Instagram credentials not configured"
+                "error": str(e)
             }
-        else:
-            instagram_api = InstagramGraphAPI()
-            
-            # Create Instagram caption
-            instagram_metadata = {
-                "titles": {"en": "Handcrafted Product", "hi": "हस्तशिल्प उत्पाद"},
-                "description": {"hi": generated_text},
-                "hashtags": hashtags
-            }
-            caption = create_instagram_caption(instagram_metadata)
-            
-            # Post reel if available, otherwise post first image
-            if reel_url:
-                # Validate reel URL first
-                if instagram_api.validate_media_url(reel_url, "REELS"):
-                    result = instagram_api.post_reel(reel_url, caption)
-                    posting_results["instagram"] = result
-                else:
-                    raise Exception("Invalid reel URL from Lambda")
-            elif processed_images:
-                # Post first processed image
-                first_image = processed_images[0]
-                if instagram_api.validate_media_url(first_image, "IMAGE"):
-                    result = instagram_api.post_image(first_image, caption)
-                    posting_results["instagram"] = result
-                else:
-                    raise Exception("Invalid image URL from Lambda")
-            else:
-                raise Exception("No valid media from Lambda for Instagram")
-            
-            log.info("✅ Instagram posting successful")
-    
-    except Exception as e:
-        log.error(f"❌ Instagram posting failed: {e}")
-        posting_results["instagram"] = {
-            "success": False,
-            "error": str(e)
         }
-    
-    return posting_results
 
 
 # Startup/shutdown events

@@ -7,6 +7,7 @@ dependencies = [
   "python-dotenv>=1.1.1",
   "requests>=2.32.5",
   "google-cloud-firestore",
+  "firebase-admin>=6.0.0",
   "google-auth>=2.0",
   "google-generativeai>=0.7",   # ✅ correct Gemini SDK
   "fastapi>=0.116.1",

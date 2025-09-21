@@ -1,51 +1,52 @@
 """
 Firebase client for fetching user uploaded photos and data
+Using Firebase Admin SDK - matches expected interface
 """
 
 import os
-import json
 import base64
-import requests
-from typing import List, Dict, Any, Optional
-from google.cloud import firestore
-from google.oauth2 import service_account
+from typing import List, Dict, Any
+import firebase_admin
+from firebase_admin import credentials, firestore
+from pathlib import Path
 from utilities.logger import get_logger
 
 log = get_logger("firebase_client")
 
 class FirebaseClient:
     def __init__(self):
-        """Initialize Firebase client with credentials"""
         self.db = None
         self._initialize_client()
     
     def _initialize_client(self):
-        """Initialize Firestore client"""
         try:
-            # Try to get Firebase config from environment
-            firebase_config = os.getenv('FIREBASE_CONFIG')
+            if firebase_admin._apps:
+                self.db = firestore.client()
+                log.info("✅ Firebase Admin already initialized")
+                return
             
-            if firebase_config:
-                # Parse JSON config from environment variable
-                config_dict = json.loads(firebase_config)
-                credentials = service_account.Credentials.from_service_account_info(config_dict)
-                self.db = firestore.Client(credentials=credentials)
-                log.info("✅ Firebase initialized from environment config")
+            service_key_path = os.getenv('FIREBASE_SERVICE_KEY_PATH', 'serviceAccountKey.json')
+            
+            if os.path.exists(service_key_path):
+                cred = credentials.Certificate(service_key_path)
+                firebase_admin.initialize_app(cred)
+                self.db = firestore.client()
+                log.info(f"✅ Firebase initialized from service key: {service_key_path}")
             else:
-                # Try default credentials (for development)
-                self.db = firestore.Client()
+                firebase_admin.initialize_app()
+                self.db = firestore.client()
                 log.info("✅ Firebase initialized with default credentials")
                 
         except Exception as e:
             log.error(f"❌ Firebase initialization failed: {e}")
             self.db = None
     
-    def get_user_photos(self, phone_number: str) -> Dict[str, Any]:
+    def get_user_photos_by_owner(self, owner_uid: str) -> Dict[str, Any]:
         """
-        Fetch user photos and metadata by phone number
+        Find document by ownerUid and return photos (expected interface)
         
         Args:
-            phone_number: User's phone number (used as ID)
+            owner_uid: User's Firebase Auth UID
             
         Returns:
             Dictionary containing user data and photos
@@ -53,51 +54,64 @@ class FirebaseClient:
         if not self.db:
             raise Exception("Firebase not initialized")
         
-        try:
-            log.info(f"Fetching photos for user: {phone_number}")
-            
-            # Query user document by phone number
-            user_ref = self.db.collection('users').document(phone_number)
-            user_doc = user_ref.get()
-            
-            if not user_doc.exists:
-                raise Exception(f"User {phone_number} not found")
-            
-            user_data = user_doc.to_dict()
-            log.info(f"Found user data: {list(user_data.keys())}")
-            
-            # Get photos from subcollection
-            photos_ref = user_ref.collection('photos')
-            photos_docs = photos_ref.stream()
-            
-            photos = []
-            for photo_doc in photos_docs:
-                photo_data = photo_doc.to_dict()
-                photos.append({
-                    'id': photo_doc.id,
-                    'url': photo_data.get('url'),
-                    'base64_data': photo_data.get('base64_data'),
-                    'filename': photo_data.get('filename'),
-                    'upload_time': photo_data.get('upload_time'),
-                    'metadata': photo_data.get('metadata', {})
-                })
-            
-            result = {
-                'user_data': user_data,
-                'photos': photos,
-                'photos_count': len(photos)
-            }
-            
-            log.info(f"Successfully fetched {len(photos)} photos for user {phone_number}")
-            return result
-            
-        except Exception as e:
-            log.error(f"Error fetching photos for {phone_number}: {e}")
-            raise
+        # Collections to try
+        collections_to_try = [
+            'products', 'items', 'listings', 'campaigns', 'posts', 'documents'
+        ]
+        
+        for collection in collections_to_try:
+            try:
+                log.info(f"Searching for ownerUid {owner_uid} in collection '{collection}'")
+                
+                query_ref = self.db.collection(collection).where('ownerUid', '==', owner_uid).limit(1)
+                docs = list(query_ref.stream())
+                
+                if docs:
+                    doc = docs[0]
+                    data = doc.to_dict()
+                    log.info(f"✅ Found document {doc.id} in collection '{collection}'")
+                    
+                    # Get media subcollection
+                    media_ref = doc.reference.collection('media')
+                    media_docs = list(media_ref.stream())
+                    
+                    photos = []
+                    for media_doc in media_docs:
+                        media_data = media_doc.to_dict()
+                        data_field = media_data.get('data', '')
+                        
+                        base64_data = None
+                        if data_field and data_field.startswith('data:image/'):
+                            parts = data_field.split(',', 1)
+                            if len(parts) == 2:
+                                base64_data = parts[1]
+                        
+                        photos.append({
+                            'id': media_doc.id,
+                            'base64_data': base64_data,
+                            'has_base64': bool(base64_data)
+                        })
+                    
+                    # Return in expected format
+                    result = {
+                        'product_data': data,  # Expected by test_whole.py
+                        'product_id': doc.id,  # Expected by test_whole.py
+                        'photos': photos,
+                        'photos_count': len(photos)
+                    }
+                    
+                    log.info(f"Successfully fetched {len(photos)} photos for ownerUid {owner_uid}")
+                    return result
+                    
+            except Exception as e:
+                log.warning(f"Error searching collection '{collection}': {e}")
+                continue
+        
+        raise Exception(f"No document found with ownerUid: {owner_uid}")
     
-    def convert_photos_to_base64(self, photos: List[Dict]) -> List[str]:
+    def convert_photos_to_base64_list(self, photos: List[Dict]) -> List[str]:
         """
-        Convert photo URLs/data to base64 strings for Lambda API
+        Extract base64 strings from photos (expected interface)
         
         Args:
             photos: List of photo dictionaries
@@ -108,35 +122,50 @@ class FirebaseClient:
         base64_images = []
         
         for photo in photos:
+            if photo.get('base64_data'):
+                base64_images.append(photo['base64_data'])
+        
+        log.info(f"Extracted {len(base64_images)} base64 images")
+        return base64_images
+    
+    def save_base64_images_as_files(self, base64_images: List[str], temp_dir: str = "temp_firebase") -> List[str]:
+        """
+        Save base64 images as temporary files (expected interface)
+        
+        Args:
+            base64_images: List of base64 image strings
+            temp_dir: Directory to save temporary files
+            
+        Returns:
+            List of file paths
+        """
+        temp_path = Path(temp_dir)
+        temp_path.mkdir(exist_ok=True)
+        
+        saved_files = []
+        
+        for i, base64_data in enumerate(base64_images):
             try:
-                # If already base64, use it
-                if photo.get('base64_data'):
-                    base64_images.append(photo['base64_data'])
-                    continue
+                # Decode base64
+                image_bytes = base64.b64decode(base64_data)
                 
-                # If URL provided, fetch and convert
-                if photo.get('url'):
-                    response = requests.get(photo['url'])
-                    response.raise_for_status()
-                    
-                    # Convert to base64
-                    image_base64 = base64.b64encode(response.content).decode('utf-8')
-                    base64_images.append(image_base64)
-                    continue
+                # Save as temp file
+                file_path = temp_path / f"firebase_image_{i+1}.png"
+                with open(file_path, 'wb') as f:
+                    f.write(image_bytes)
                 
-                log.warning(f"Photo {photo.get('id')} has no usable data")
+                saved_files.append(str(file_path))
+                log.info(f"Saved Firebase image to: {file_path}")
                 
             except Exception as e:
-                log.error(f"Error converting photo {photo.get('id')} to base64: {e}")
+                log.error(f"Error saving base64 image {i+1}: {e}")
                 continue
         
-        log.info(f"Converted {len(base64_images)} photos to base64")
-        return base64_images
+        return saved_files
 
 
-# Global Firebase client instance
+# Global instance
 firebase_client = FirebaseClient()
 
 def get_firebase_client() -> FirebaseClient:
-    """Get the global Firebase client instance"""
     return firebase_client
